@@ -130,7 +130,7 @@ ffmpeg_location = ''
 system_os = platform.system()
 home_dir = ''
 if system_os in ('Linux', 'Darwin'):
-    home_dir = os.environ['HOME'] + r'\Videos\youtube-dl'
+    home_dir = os.environ['HOME'] + r'/Videos/youtube-dl'
 else:
     home_dir = os.environ['USERPROFILE'] + r'\Videos\youtube-dl'
 
