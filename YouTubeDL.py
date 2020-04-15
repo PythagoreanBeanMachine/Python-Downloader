@@ -1,14 +1,15 @@
 import youtube_dl
 import os
+import platform
+import subprocess
 import sys
 from tkinter import *
 import tkinter.messagebox as mb
 from tkinter import filedialog as fd
 
 
-
 def get_url():
-    if (browse_var.get() and extract_var.get()):
+    if browse_var.get() and extract_var.get():
         full_path = fd.asksaveasfilename()
         split_path = os.path.split(full_path)
         os.chdir(split_path[0])
@@ -17,13 +18,15 @@ def get_url():
                         'keepvideo': True,
                         'ffmpeg_location': ffmpeg_location,
                         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                        'outtmpl': split_path[1] + '.%(ext)s'
+                        'outtmpl': split_path[1] + '.%(ext)s',
+                        'progress_hooks': [hook_info]
                         }
         else:
             ytdl_opts = {
                         'ffmpeg_location': ffmpeg_location,
                         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                        'outtmpl': split_path[1] + '.%(ext)s'
+                        'outtmpl': split_path[1] + '.%(ext)s',
+                        'progress_hooks': [hook_info]
                         }
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
@@ -34,13 +37,15 @@ def get_url():
                          'keepvideo': True,
                          'ffmpeg_location': ffmpeg_location,
                          'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                         'outtmpl': '%(title)s.%(ext)s'
+                         'outtmpl': '%(title)s.%(ext)s',
+                         'progress_hooks': [hook_info]
                          }
         else:
             ytdl_opts = {
                          'ffmpeg_location': ffmpeg_location,
                          'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                         'outtmpl': '%(title)s.%(ext)s'
+                         'outtmpl': '%(title)s.%(ext)s',
+                         'progress_hooks': [hook_info]
                          }
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
@@ -48,42 +53,44 @@ def get_url():
         full_path = fd.asksaveasfilename()
         split_path = os.path.split(full_path)
         os.chdir(split_path[0])
-        ytdl_opts = {'outtmpl': split_path[1] + '.%(ext)s'}
+        ytdl_opts = {'outtmpl': split_path[1] + '.%(ext)s', 'progress_hooks': [hook_info]}
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
     elif extract_var.get():
         
-        if os.path.isdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\'):
-            os.chdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
+        if os.path.isdir(home_dir):
+            os.chdir(home_dir)
         else:
-            os.mkdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
-            os.chdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
+            os.mkdir(home_dir)
+            os.chdir(home_dir)
         if keep_var.get():
             ytdl_opts = {
                          'keepvideo': True,
                          'ffmpeg_location': ffmpeg_location,
                          'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                         'outtmpl': '%(title)s.%(ext)s'
+                         'outtmpl': '%(title)s.%(ext)s',
+                         'progress_hooks': [hook_info]
                          }
         else:
             ytdl_opts = {
                          'ffmpeg_location': ffmpeg_location,
                          'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': formats_var.get()}],
-                         'outtmpl': '%(title)s.%(ext)s'
+                         'outtmpl': '%(title)s.%(ext)s',
+                         'progress_hooks': [hook_info]
                          }
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
     elif play_var.get():
         os.chdir(fd.askdirectory())
-        ytdl_opts = {'outtmpl': '%(title)s.%(ext)s'}
+        ytdl_opts = {'outtmpl': '%(title)s.%(ext)s', 'progress_hooks': [hook_info]}
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
     else:
-        if os.path.isdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\'):
-            os.chdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
+        if os.path.isdir(home_dir):
+            os.chdir(home_dir)
         else:
-            os.mkdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
-            os.chdir(os.getenv('USERPROFILE') + '\\videos\\youtube-dl\\')
+            os.mkdir(home_dir)
+            os.chdir(home_dir)
         ytdl_opts = {'outtmpl': '%(title)s.%(ext)s', 'progress_hooks': [hook_info]}
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
@@ -92,9 +99,8 @@ def get_url():
 def hook_info(d):
     
     if d['status'] == 'downloading':
-        notif = Toplevel(screen)
-        notif.wm_title('Downloading')
-        notif_label = Label(notif, text='_percent_str')
+        down_percent['text'] = 'Percent Downloaded: ' + d['_percent_str']
+        screen.update()
     elif d['status'] == 'finished':
         file_tuple = os.path.split(os.path.abspath(d['filename']))
         mb.showinfo('', 'Done downloading {}'.format(file_tuple[1]))
@@ -110,13 +116,23 @@ def disable_enable_keep():
     formats.configure(state=NORMAL if extract_var.get() else DISABLED)
 
 
+def update_youtube_dl():
+    subprocess.run("pip install --upgrade youtube_dl")
+
+
 def exit_program():
     screen.destroy()
     sys.exit(0)
 
 
-# Variables =
+# Variables
 ffmpeg_location = ''
+system_os = platform.system()
+home_dir = ''
+if system_os in ('Linux', 'Darwin'):
+    home_dir = os.environ['HOME'] + r'\Videos\youtube-dl'
+else:
+    home_dir = os.environ['USERPROFILE'] + r'\Videos\youtube-dl'
 
 # Begin GUI
 screen = Tk()
@@ -127,7 +143,7 @@ banner.grid(row=0, column=0, columnspan=2)
 
 # Obtaining the URL
 url_label = Label(screen, text='Enter the URL: ')
-url_label.grid(row=1, column = 0, sticky=W)
+url_label.grid(row=1, column=0, sticky=W)
 url_enter = Entry(screen, width=35)
 url_enter.grid(row=1, column=1, columnspan=2, sticky=W)
 
@@ -149,7 +165,7 @@ extract.grid(row=4, column=1, sticky=W)
 keep_video.grid(row=5, column=1)
 
 formats_var = StringVar()
-values={'flac', 'mp3', 'aac', 'm4a', 'opus', 'vorbis', 'wav'}
+values = {'flac', 'mp3', 'aac', 'm4a', 'opus', 'vorbis', 'wav'}
 formats_var.set('flac')
 formats = OptionMenu(screen, formats_var, *values)
 formats.configure(state=DISABLED)
@@ -161,7 +177,14 @@ play_check = Checkbutton(screen, variable=play_var, text='Playlist', command=dis
 play_check.grid(row=6, column=1, sticky=W)
 # End Options
 
+# Static Labels
+down_percent = Label(screen, text='')
+down_percent.grid(row=7, column=1, columnspan=2, sticky=E)
+# End Static Labels
+
 # Execution Buttons
+update = Button(screen, text='Update', command=update_youtube_dl)
+update.grid(row=4, column=0, sticky=W)
 download = Button(screen, text='Download Video', command=get_url)
 download.grid(row=7, column=0)
 quit_program = Button(screen, text='Quit', command=exit_program)
