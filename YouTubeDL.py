@@ -57,7 +57,6 @@ def get_url():
         with youtube_dl.YoutubeDL(ytdl_opts) as yt:
             yt.download([url_enter.get()])
     elif extract_var.get():
-        
         if os.path.isdir(home_dir):
             os.chdir(home_dir)
         else:
@@ -97,7 +96,6 @@ def get_url():
 
 
 def hook_info(d):
-    
     if d['status'] == 'downloading':
         down_percent['text'] = 'Percent Downloaded: ' + d['_percent_str']
         screen.update()
